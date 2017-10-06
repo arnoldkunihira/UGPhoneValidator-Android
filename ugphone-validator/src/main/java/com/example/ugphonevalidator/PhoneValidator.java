@@ -1,69 +1,86 @@
 package com.example.ugphonevalidator;
 
+import android.util.Log;
+
 import java.lang.String;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by Arnold on 10/4/2017.
  */
 
 public class PhoneValidator {
-    private String prefix = null;
-    private String operator = null;
-    private String countryCode;
-//    protected String countryPrefix = "+" + countryCode;
+    private String msisdn; // Mobile Station International Subscriber Directory Number
+    private String countryCode = "256";
+    private String prefix;
 
-    private String getPrefix(String phone_number) {
-        if (phone_number != null) {
-            this.prefix = phone_number.substring(0, 2);
+    // Values can not be reassigned
+    private static final Set<String> MTNPrefixes = new HashSet<>(Arrays.asList(new String[]{"77", "78"}));
+    private static final Set<String> AirtelPrefixes = new HashSet<>(Arrays.asList(new String[]{"70", "75"}));
+
+    private static final String AfricellPrefixes = "79";
+    private static final String VodafonePrefixes = "72";
+    private static final String UTLPrefixes = "71";
+
+    private String getPrefix() {
+        if (this.prefix == null) {
+            this.prefix = this.msisdn.substring(0, 2);
         }
+        Log.i("PV", "boo " + this.prefix);
         return this.prefix;
     }
 
-    private String getOperator(String phone_number) {
+    public PhoneValidator(String msisdn) {
+        this.msisdn = msisdn;
+        clean();
+        getPrefix();
+        Log.i("PV", "cleaned = " + this.msisdn);
+    }
 
-        String prefix = this.getPrefix(phone_number);
-
-        if (prefix.equals("77") && prefix.equals("78")) {
-            return "MTN NETWORK";
-
-        } else if (prefix.equals("70") && prefix.equals("75")) {
-            return "AIRTEL NETWORK";
-
-        } else if (prefix.equals("72")) {
-            return "VODAFONE NETWORK";
-
-        } else if (prefix.equals("79")) {
-            return "AFRICELL NETWORK";
-
-        } else if (prefix.equals("71")) {
-            return "UTL NETWORK";
-
+    public String getOperator() {
+        if (MTNPrefixes.contains(getPrefix())) {
+            return "MTN";
+        } else if (AirtelPrefixes.contains(getPrefix())) {
+            return "AIRTEL";
+        } else if (AfricellPrefixes.contains(getPrefix())) {
+            return "AFRICELL";
+        } else if (VodafonePrefixes.contains(getPrefix())) {
+            return "VODAFONE";
+        } else if (UTLPrefixes.contains(getPrefix())) {
+            return "AFRICELL";
         } else {
-            return "UNKNOWN NETWORK";
+            return "UNKNOWN";
         }
     }
 
-    private String getCountryCode(String countryCode) {
-        this.countryCode = countryCode;
-        if (countryCode.equals("256")) {
-            return "Uganda";
-        } else
-            return "UNKNOWN COUNTRY";
+    public String getPhoneNumber() {
+        return countryCode + this.msisdn;
     }
 
-    private String PhoneNumber(String countryCode, String phone_number) {
-        String mobileNumber = countryCode + phone_number;
-        if (countryCode.equals("256") && (phone_number.equals("782459681"))) {
-            return countryCode + phone_number;
+    private String clean(String msisdn) {
+        msisdn = msisdn.replaceAll("[^0-9]", " ");
+        if (msisdn.substring(0, 1).equals("0")) {
+            msisdn = msisdn.substring(1, msisdn.length());
+        } else if (msisdn.substring(0, this.countryCode.length()).equals(this.countryCode)) {
+            msisdn = msisdn.substring(3, msisdn.length());
         }
-        return mobileNumber;
+        return msisdn;
     }
 
-    public static void main(String args[]) {
-        PhoneValidator validator = new PhoneValidator();
-        validator.PhoneNumber("256", "782459681");
-        validator.getOperator("782459681");
-        validator.getCountryCode("256");
+    private void clean() {
+        this.msisdn = this.msisdn.replaceAll("[^0-9]", " ");
+        if (this.msisdn.substring(0, 1).equals("0")) {
+            this.msisdn = this.msisdn.substring(1, this.msisdn.length());
+        } else if (this.msisdn.substring(0, 3).equals(this.countryCode)) {
+            this.msisdn = this.msisdn.substring(3, this.msisdn.length());
+        }
+    }
+
+    public boolean validate(String msisdn) {
+        String cleanNumber = clean(msisdn);
+        return ((cleanNumber.length() == 9) && (!cleanNumber.isEmpty()));
     }
 }
 
